@@ -1,12 +1,12 @@
 export const difficulties = {
   easy: {
-    answer_time: 50, // seconds
+    answer_time: 60, // seconds
     discussion_time: 60, // seconds
-    voting_time: 20
+    voting_time: 30
   },
   hard: {
-    answer_time: 50, // seconds
+    answer_time: 60, // seconds
     discussion_time: 0, // seconds
-    voting_time: 20
+    voting_time: 30
   },
 };

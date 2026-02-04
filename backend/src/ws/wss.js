@@ -94,26 +94,45 @@ const handleAutoStart = async (serverCode, wss) => { // Added wss parameter
   }
 
 
-  lobby.broadCastAll({
-    type: "game_starting",
-    message: "The game is about to start!"
-  });
+  lobby.broadCastAll("game_starting");
 
   lobby.setGameInstance(new Game(
     lobby.getPlayers(),
     lobby.getDifficultyMode(),
     lobby.getLobbyRounds(),
     wss,
-    () => { // onGameEndCallback
-      lobby.setLobbyState("waiting");
-      console.log(`Lobby ${serverCode} state set to waiting after game end.`);
+    async () => { // onGameEndCallback correctly defined as async
+      console.log(`Game ended for lobby ${serverCode}`);
+
+      // 1️⃣ Broadcast "Game Over" message
+      lobby.broadCastAll("game_over");
+
+      // 2️⃣ Close all WebSocket connections
+      lobby.getPlayers().forEach(player => {
+        try {
+          if (player.ws && player.ws.readyState === WebSocket.OPEN) {
+            player.ws.close(1000, "Game ended");
+          }
+        } catch (err) {
+          console.error("Error closing websocket:", err);
+        }
+      });
+
+      // 3️⃣ Delete lobby (DB + memory)
+      try {
+        await deleteLobby(serverCode);
+        delete lobbies[serverCode];
+        console.log(`Lobby ${serverCode} deleted successfully`);
+      } catch (err) {
+        console.error("Failed to delete lobby:", err);
+      }
     },
-    lobbies[serverCode].getAIPlayer(),
-    lobbies[serverCode]
+    lobby.getAIPlayer(),
+    lobby
   ));
 
   const aiPlayer = lobby.getAIPlayer();
-  if(aiPlayer){
+  if (aiPlayer) {
     aiPlayer.gameInstance = lobby.getGameInstance();
   }
 
@@ -137,17 +156,12 @@ wss.on("connection", async (ws, request, serverCode, playerInfo) => {
       [],
       'waiting',
       data[0].max_players,
-      data[0].rounds,       
+      data[0].rounds,
       data[0].difficulty
     )
 
-    if (lobbies[serverCode].getLobbyState() === 'playing') {
-      ws.send(
-        JSON.stringify({ type: "error", message: "Game is currently in progress" })
-      );
-      ws.close();
-      return;
-    }
+    // Removed restriction for joining playing lobbies to support reconnection.
+    // Reconnecting players will get a new random name but will receive future updates.
 
 
     if (lobbies[serverCode].getPlayers().length >= lobbies[serverCode].getMaxPlayers()) {
@@ -167,7 +181,7 @@ wss.on("connection", async (ws, request, serverCode, playerInfo) => {
   // Assigning player with random name from the defined array of names
   try {
     playerInfo.name = assignRandomName(serverCode, gameNamePool);
-    ws.send(JSON.stringify({type: "private", message: `Your game name is ${playerInfo.name}`}))
+    ws.send(JSON.stringify({ type: "announce_name", message: `Your game name is ${playerInfo.name}` }))
   } catch (error) {
     console.error("Failed to assign random name:", error);
     ws.send(JSON.stringify({ type: "error", message: error.message }));
@@ -176,18 +190,24 @@ wss.on("connection", async (ws, request, serverCode, playerInfo) => {
   }
 
   // Add player to lobby
-  lobbies[serverCode].setPlayer({ ...playerInfo, ws});
+  lobbies[serverCode].setPlayer({ ...playerInfo, ws });
+
 
   lobbies[serverCode].broadCastAll("online_players");
 
 
-  if (lobbies[serverCode].getPlayers().length === lobbies[serverCode].getMaxPlayers()) {
+  if (lobbies[serverCode].getLobbyState() === 'waiting' && lobbies[serverCode].getPlayers().length === lobbies[serverCode].getMaxPlayers()) {
     handleAutoStart(serverCode, wss); // Game auto starts
+  } else if (lobbies[serverCode].getLobbyState() === 'playing') {
+    console.log(`Player ${playerInfo.name} joined an existing game in server ${serverCode}. Sending game_starting.`);
+    ws.send(JSON.stringify({
+      type: "game_starting",
+      message: { text: "Reconnecting to game...", serverCode }
+    }));
   }
 
   // Listen to messages from this player
   ws.on("message", (message) => {
-    console.log(`Message from ${playerInfo.name}:`, message.toString());
     try {
       const parsedMessage = JSON.parse(message.toString());
       const game = lobbies[serverCode].getGameInstance();
@@ -225,7 +245,8 @@ wss.on("connection", async (ws, request, serverCode, playerInfo) => {
   });
 
   // Handle disconnect
-  ws.on("close", async () => {
+  ws.on("close", async (code, reason) => {
+    console.log(`WebSocket closed for ${playerInfo.name}. Code: ${code}, Reason: ${reason}`);
     if (lobbies[serverCode]) {
       lobbies[serverCode].removePlayer(ws);
       lobbies[serverCode].broadCastAll("online_players");

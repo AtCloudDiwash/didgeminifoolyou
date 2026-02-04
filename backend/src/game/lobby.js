@@ -103,7 +103,7 @@ export class Lobby {
         this.#players = this.#players.filter(p => p.name !== playerName);
 
         this.broadcast(
-            "announcement",
+            "kick_info",
             `Player with username ${playerName} was kicked out`
         );
     }
@@ -129,7 +129,7 @@ export class Lobby {
                     player.ws.send(
                         JSON.stringify({
                             type: "online_players",
-                            message: `${this.#players.length}/${this.#maxPlayers} online`
+                            message: `${this.#players.length}/${this.#maxPlayers}`
                         })
                     )
                 });
@@ -139,7 +139,10 @@ export class Lobby {
                     player.ws.send(
                         JSON.stringify({
                             type: "game_starting",
-                            message: "The game is about to start!"
+                            message: {
+                                text: "The game is about to start!",
+                                serverCode: this.#gameInstance ? "DUMMY_FOR_EXISTING" : "NEW" // Not strictly needed if we just pass the code
+                            }
                         })
                     )
                 });

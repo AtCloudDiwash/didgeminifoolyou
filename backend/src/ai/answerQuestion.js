@@ -29,7 +29,11 @@ ${question}
 </Instructions>
 `;
 
-    // const result = await askGemini(prompt);
-    // return result.trim(); // clean up any leading/trailing whitespace
-    return "My ai answer"
+    try {
+        const result = await askGemini(prompt);
+        return result.trim(); // clean up any leading/trailing whitespace
+    } catch (error) {
+        console.error("Error generating answer:", error);
+        return "I think so."; // Fallback answer
+    }
 }

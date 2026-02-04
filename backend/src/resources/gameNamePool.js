@@ -1,15 +1,15 @@
 export const gameNamePool = [
-    "GeminiCore", 
-    "AlmostHuman", 
-    "DefinitelyBot", 
-    "NotABotIPromise", 
-    "RealPerson99", 
-    "GeneratedReply", 
-    "ProbablyNotAI",
-    "ImitationMode",
-    "UnnamedUser",
-    "SeemsNormal",
-    "RareCondition",
-    "HumanToneEnabled",
-    "RegularUser"
+    "Gemini Core", 
+    "Almost Human", 
+    "Definitely Bot", 
+    "Not A Bot I Promise", 
+    "Real Person99", 
+    "Generated Reply", 
+    "Probably Not AI",
+    "Imitation Mode",
+    "Unnamed User",
+    "Seems Normal",
+    "Rare Condition",
+    "Human Tone Enabled",
+    "Regular User"
 ]

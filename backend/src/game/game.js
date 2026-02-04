@@ -45,7 +45,7 @@ export class Game {
     this.#lobbyInstance = lobbyInstance;
 
     this.players.forEach(player => {
-      this.scores[player.id] = 0; // Assuming each player has a unique 'id'
+      this.scores[player.name] = 0; // Use player.name as key
     });
 
     // Generate all questions once when the game is created
@@ -54,7 +54,7 @@ export class Game {
       console.log("Questiosn brewed: ", this.allQuestions);
 
       this.broadcast(
-        "announcement",
+        "game_intro",
         ["Welcome to did gemini fool you ?", `You have ${totalRounds} rounds to find AI imposter`,
           "Each round will have a question",
           `You will have ${this.difficultySettings.answer_time} second to answer a question`,
@@ -103,7 +103,7 @@ export class Game {
     const currentQuestion = this.allQuestions[this.currentRoundNumber - 1];
 
     this.currentRound = new Round(
-      this.players,
+      this.#lobbyInstance,
       this.difficultySettings,
       this.currentRoundNumber,
       currentQuestion,
@@ -127,10 +127,11 @@ export class Game {
       .map(([name]) => name);
 
     if (playerToBeKicked.length > 1) {
-      this.broadcast("announcement", "No one was kicked out");
+      this.broadcast("kick_info", "No one was kicked out");
     } else {
       if (playerToBeKicked[0] === this.aiPlayer.name && this.aiPlayer.getSwapLeft() > 0) {
         const scores = await suspicionCalculator(roundResults.voteTable, roundResults.answerLog, roundResults.aiPlayerName);
+        this.aiPlayer.useSwap();
         const [playerToKick] = Object.entries(scores.suspicionScores)
           .reduce((max, current) =>
             current[1] > max[1] ? current : max
@@ -138,7 +139,7 @@ export class Game {
         this.#lobbyInstance.kickPlayer(playerToKick);
       } else {
         if (playerToBeKicked[0] === this.aiPlayer.name) {
-          this.broadcast("announcement", "Yay! you caught the imposter");
+          this.broadcast("human_wins", "Yay! you caught the imposter");
           this.endGame();
         } else {
           this.#lobbyInstance.kickPlayer(playerToBeKicked[0]);
@@ -146,10 +147,10 @@ export class Game {
       }
     }
 
-    if(this.#lobbyInstance.getPlayers().length > 1){
+    if (this.#lobbyInstance.getPlayers().length > 1) {
       this.startRound();
     } else {
-      this.broadcast("announcement", "Game over gemini fooled you");
+      this.broadcast("gemini_wins", "Game over gemini fooled you");
       this.endGame();
     }
   }
@@ -159,18 +160,19 @@ export class Game {
     console.log("Your game data saving on supabase");
     const gameData = mapToJSON(this.#gameDetail);
     console.log(gameData);
-    const {data, error} = await supabase
+    console.log(JSON.stringify(gameData));
+    const { data, error } = await supabase
       .from("game_log")
       .insert({
-        data:gameData
+        data: gameData
       }).select().single();
 
-      if(data){
-        console.log(data);
-      }
+    if (data) {
+      console.log(data);
+    }
 
-    this.players.forEach(player => {
-      player.ws.send(JSON.stringify({ type: "game_over", scores: this.scores }));
+    this.#lobbyInstance.getPlayers().forEach(player => {
+      player.ws.send(JSON.stringify({ type: "game_over", message: "Thanks for playing. Create new server and play more" }));
     });
     if (this.onGameEndCallback) {
       this.onGameEndCallback();
@@ -186,7 +188,7 @@ export class Game {
   // methods
 
   broadcast(type, message) {
-    this.players.forEach(player => {
+    this.#lobbyInstance.getPlayers().forEach(player => {
       player.ws.send(JSON.stringify({ type, message }));
     });
   }

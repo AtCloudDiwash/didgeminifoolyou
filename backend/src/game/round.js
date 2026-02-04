@@ -3,10 +3,12 @@ import { difficulties } from "./difficulty.js";
 export class Round {
   #votingTable;
   #answerLog;
+  #phaseTimer;
+  #lobbyInstance;
   // #discussionLog;
 
-  constructor(players, difficultySettings, roundNumber, question, wss, onRoundEndCallback, aiPlayer) {
-    this.players = players;
+  constructor(lobbyInstance, difficultySettings, roundNumber, question, wss, onRoundEndCallback, aiPlayer) {
+    this.#lobbyInstance = lobbyInstance;
     this.difficultySettings = difficultySettings;
     this.roundNumber = roundNumber;
     this.wss = wss;
@@ -16,10 +18,30 @@ export class Round {
     this.timers = [];
     this.#votingTable = new Map();
     this.#answerLog = new Map();
+    this.#phaseTimer = null;
     // this.#discussionLog = [];
     this.aiPlayer = aiPlayer;
 
     console.log(`Round ${this.roundNumber} initialized with settings:`, difficultySettings);
+  }
+
+  get players() {
+    return this.#lobbyInstance.getPlayers();
+  }
+
+  startPhaseTimer(duration) {
+    if (this.#phaseTimer) clearInterval(this.#phaseTimer);
+
+    let timeLeft = duration;
+    this.#phaseTimer = setInterval(() => {
+      timeLeft--;
+      this.broadcast("timer_tick", timeLeft);
+
+      if (timeLeft <= 0) {
+        clearInterval(this.#phaseTimer);
+        this.#phaseTimer = null;
+      }
+    }, 1000);
   }
 
   start() {
@@ -30,7 +52,7 @@ export class Round {
     this.currentPhase = "ANSWERING";
     console.log(`Round ${this.roundNumber}: Starting Answering Phase`);
 
-    this.broadcast({ type: "answering_phase", message: { question: this.question, time: `You have ${this.difficultySettings.answer_time} seconds` } });
+    this.broadcast("answering_phase", { question: this.question, time: `${this.difficultySettings.answer_time}` });
 
     const aiAnswer = await this.aiPlayer.decideAnswer(this.question);
     setTimeout(() => {
@@ -38,14 +60,16 @@ export class Round {
       this.#answerLog.set(`${this.aiPlayer.name} (AI Player)`, aiAnswer);
     }, 35000)
 
+    this.startPhaseTimer(this.difficultySettings.answer_time);
+
     setTimeout(() => {
       this.endAnsweringPhase();
     }, this.difficultySettings.answer_time * 1000);
   }
 
   endAnsweringPhase() {
-    console.log(`Round ${this.roundNumber}: Ending Answering Phase`);
-
+    if (this.#phaseTimer) clearInterval(this.#phaseTimer);
+    this.#phaseTimer = null;
     // Process answers, check for imposter, etc.
     this.startVotingPhase();
   }
@@ -78,11 +102,18 @@ export class Round {
   }
 
   async startVotingPhase() {
-
     this.currentPhase = "VOTING";
     console.log(`Round ${this.roundNumber}: Starting Voting Phase`);
-    this.broadcast({ type: "voting_phase" });
-    this.#votingTable.clear() // Table gets cleared
+    this.broadcast("voting_phase", {
+      current_players: [
+        ...this.players.map(p => p.name),
+        this.aiPlayer.name
+      ],
+      time: this.difficultySettings.voting_time
+    });
+    this.#votingTable.clear();
+
+    this.startPhaseTimer(this.difficultySettings.voting_time);
 
     setTimeout(() => {
       this.endVotingPhase();
@@ -90,27 +121,43 @@ export class Round {
   }
 
   endVotingPhase() {
+    if (this.#phaseTimer) clearInterval(this.#phaseTimer);
+    this.#phaseTimer = null;
+
     console.log(`Round ${this.roundNumber}: Ending Voting Phase`);
-    this.onRoundEndCallback({ voteTable: this.#votingTable, answerLog: this.#answerLog, aiPlayerName: this.aiPlayer.name, roundNumber: this.roundNumber, playerInfo: this.players});
+    this.broadcast("round_end", "Round ended");
+    this.onRoundEndCallback({
+      voteTable: this.#votingTable,
+      answerLog: this.#answerLog,
+      aiPlayerName: this.aiPlayer.name,
+      roundNumber: this.roundNumber,
+      playerInfo: this.players.map(p => ({
+        name: p.name,
+        age: p.age
+      }))
+    });
   }
 
-  broadcast(message, excludePlayerName = null) {
+  broadcast(type, message, excludePlayerName = null) {
     this.players.forEach(player => {
       if (excludePlayerName && player.name === excludePlayerName) {
         return;
       }
-      player.ws.send(JSON.stringify(message));
+      player.ws.send(JSON.stringify({ type, message }));
     });
   }
 
-  // Not necessary
   clearTimers() {
     this.timers.forEach(timer => clearTimeout(timer));
     this.timers = [];
+    if (this.#phaseTimer) {
+      clearInterval(this.#phaseTimer);
+      this.#phaseTimer = null;
+    }
   }
 
   handlePlayerAnswer(playerName, answer) {
-    this.broadcast({ type: "answer", sender: playerName, answer: answer }, playerName);
+    this.broadcast("player_answer", { sender: playerName, answer: answer });
     if (!this.#answerLog.has(playerName)) {
       this.#answerLog.set(playerName, answer);
     }
@@ -124,4 +171,3 @@ export class Round {
     }
   }
 }
-
