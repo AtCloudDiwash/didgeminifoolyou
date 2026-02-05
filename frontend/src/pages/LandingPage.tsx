@@ -23,7 +23,7 @@ export default function LandingPage() {
 
     const handleCreateServer = async () => {
         try {
-            const response = await fetch('http://localhost:3000/lobbies/create', {
+            const response = await fetch('http://3.14.151.45:3000/lobbies/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ difficulty, rounds })
