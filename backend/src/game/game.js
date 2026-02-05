@@ -132,6 +132,7 @@ export class Game {
       if (playerToBeKicked[0] === this.aiPlayer.name && this.aiPlayer.getSwapLeft() > 0) {
         const scores = await suspicionCalculator(roundResults.voteTable, roundResults.answerLog, roundResults.aiPlayerName);
         this.aiPlayer.useSwap();
+        this.broadcast("announcement", "Something mysterious happened in this round");
         const [playerToKick] = Object.entries(scores.suspicionScores)
           .reduce((max, current) =>
             current[1] > max[1] ? current : max
@@ -141,6 +142,7 @@ export class Game {
         if (playerToBeKicked[0] === this.aiPlayer.name) {
           this.broadcast("human_wins", "Yay! you caught the imposter");
           this.endGame();
+          return;
         } else {
           this.#lobbyInstance.kickPlayer(playerToBeKicked[0]);
         }
@@ -152,6 +154,7 @@ export class Game {
     } else {
       this.broadcast("gemini_wins", "Game over gemini fooled you");
       this.endGame();
+      return;
     }
   }
 

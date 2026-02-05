@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { useState } from 'react';
-import { Button } from '../ui/Button';
 
 export default function AnsweringWindow() {
     const { sendMessage, playerName } = useWebSocket();
@@ -29,11 +28,16 @@ export default function AnsweringWindow() {
                             placeholder="Type your answer..."
                             className="flex-1 h-14 bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-white/20 focus:outline-none focus:border-brand-blue transition-colors font-body resize-none"
                         />
-                        <Button onClick={handleSubmit} className="h-14 px-8 bg-brand-blue hover:bg-brand-blue-dark">Submit</Button>
+                        <button
+                            onClick={handleSubmit}
+                            className="h-14 px-8 bg-[#8b1a1a] hover:bg-[#a02020] text-white font-heading uppercase tracking-widest rounded-2xl transition-all shadow-lg active:scale-95"
+                        >
+                            Send
+                        </button>
                     </div>
                 ) : (
                     <div className="text-center py-4 text-green-400 font-heading">
-                        Thinking sent! Wait for others...
+                        Answer sent! Waiting for others...
                     </div>
                 )}
             </motion.div>

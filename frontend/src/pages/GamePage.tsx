@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import ChatWindow from '../components/game/ChatWindow';
 import VotingWindow from '../components/game/VotingWindow';
 import GameOverWindow from '../components/game/GameOverWindow';
+import AnsweringWindow from '../components/game/AnsweringWindow';
 
 import logo from '../assets/gemiposter.svg';
 
@@ -28,6 +29,16 @@ export default function GamePage() {
         if (gameState === 'PLAYING') {
             setShowQuestionOverlay(true);
             const timer = setTimeout(() => setShowQuestionOverlay(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [gameState]);
+
+    // Auto-dismiss SHOW_RESULT screen after 5 seconds to prevent freeze
+    useEffect(() => {
+        if (gameState === 'SHOW_RESULT') {
+            const timer = setTimeout(() => {
+                // Game will continue automatically from backend
+            }, 5000);
             return () => clearTimeout(timer);
         }
     }, [gameState]);
@@ -173,9 +184,20 @@ export default function GamePage() {
                     </div>
                 </header>
 
-                {/* CHAT WINDOW */}
+                {/* CHAT WINDOW / ANSWERING WINDOW */}
                 <main className="flex-1 overflow-hidden relative bg-[#111] rounded-3xl border border-white/5 shadow-inner">
-                    <ChatWindow />
+                    {gameState === 'PLAYING' && !showQuestionOverlay ? (
+                        <div className="h-full flex flex-col">
+                            <div className="flex-1 overflow-hidden">
+                                <ChatWindow />
+                            </div>
+                            <div className="p-4 border-t border-white/5">
+                                <AnsweringWindow />
+                            </div>
+                        </div>
+                    ) : (
+                        <ChatWindow />
+                    )}
                 </main>
 
                 {/* PLAYER LABEL */}

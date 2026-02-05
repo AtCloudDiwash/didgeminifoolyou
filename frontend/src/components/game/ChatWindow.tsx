@@ -61,26 +61,28 @@ export default function ChatWindow() {
                 </AnimatePresence>
             </div>
 
-            {/* Input Section */}
-            <div className="p-6 bg-[#0c0c0c] border-t border-white/5">
-                <div className="flex gap-4">
-                    <input
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={gameState === 'PLAYING' ? "Write your answer ..." : "Type a message..."}
-                        className="flex-1 bg-[#1a1a1a] border-none rounded-2xl px-8 py-4 text-white placeholder-white/10 focus:ring-1 focus:ring-brand-blue/30 transition-all font-body text-lg"
-                    />
-                    <button
-                        onClick={handleSend}
-                        className="bg-[#8b1a1a] hover:bg-[#a02020] text-white font-heading uppercase tracking-widest px-10 py-4 rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
-                        disabled={!message.trim()}
-                    >
-                        Send
-                    </button>
+            {/* Input Section - Hide during PLAYING state (AnsweringWindow handles it) */}
+            {gameState !== 'PLAYING' && (
+                <div className="p-6 bg-[#0c0c0c] border-t border-white/5">
+                    <div className="flex gap-4">
+                        <input
+                            type="text"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Type a message..."
+                            className="flex-1 bg-[#1a1a1a] border-none rounded-2xl px-8 py-4 text-white placeholder-white/10 focus:ring-1 focus:ring-brand-blue/30 transition-all font-body text-lg"
+                        />
+                        <button
+                            onClick={handleSend}
+                            className="bg-[#8b1a1a] hover:bg-[#a02020] text-white font-heading uppercase tracking-widest px-10 py-4 rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                            disabled={!message.trim()}
+                        >
+                            Send
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }

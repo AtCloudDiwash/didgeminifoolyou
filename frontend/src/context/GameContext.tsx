@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react';
 import { useWebSocket } from './WebSocketContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,132 +19,265 @@ interface GameContextType {
 
 const GameContext = createContext<GameContextType | null>(null);
 
+// Reducer for Game state
+type GameStateType = {
+    gameState: GameState;
+    serverCode: string | null;
+    players: string[];
+    currentQuestion: { text: string; time: number } | null;
+    timeLeft: number;
+    gameMessage: string | null;
+    chatMessages: { name: string; message: string }[];
+    onlinePlayers: string;
+};
+
+type GameAction =
+    | { type: 'SET_SERVER_CODE'; code: string | null }
+    | { type: 'SET_ONLINE_PLAYERS'; count: string }
+    | { type: 'GAME_STARTING'; message: string; serverCode?: string }
+    | { type: 'SET_ANNOUNCEMENT'; message: string }
+    | { type: 'ANSWERING_PHASE'; question: string; time: number }
+    | { type: 'VOTING_PHASE'; players: string[]; time: number }
+    | { type: 'TIMER_TICK'; time: number }
+    | { type: 'ROUND_END'; message: string }
+    | { type: 'GAME_OVER'; message: string }
+    | { type: 'SHOW_RESULT'; message: string }
+    | { type: 'ADD_CHAT_MESSAGE'; name: string; message: string }
+    | { type: 'RESET' };
+
+function gameReducer(state: GameStateType, action: GameAction): GameStateType {
+    switch (action.type) {
+        case 'SET_SERVER_CODE':
+            return { ...state, serverCode: action.code };
+
+        case 'SET_ONLINE_PLAYERS':
+            return { ...state, onlinePlayers: action.count };
+
+        case 'GAME_STARTING':
+            return {
+                ...state,
+                gameState: 'GAME_STARTING',
+                gameMessage: action.message,
+                serverCode: action.serverCode || state.serverCode,
+            };
+
+        case 'SET_ANNOUNCEMENT':
+            return { ...state, gameMessage: action.message };
+
+        case 'ANSWERING_PHASE':
+            return {
+                ...state,
+                gameState: 'PLAYING',
+                currentQuestion: { text: action.question, time: action.time },
+                timeLeft: action.time,
+            };
+
+        case 'VOTING_PHASE':
+            return {
+                ...state,
+                gameState: 'VOTING',
+                players: action.players,
+                timeLeft: action.time,
+            };
+
+        case 'TIMER_TICK':
+            return { ...state, timeLeft: action.time };
+
+        case 'ROUND_END':
+            return {
+                ...state,
+                gameState: 'ROUND_END',
+                gameMessage: action.message,
+            };
+
+        case 'GAME_OVER':
+            return {
+                ...state,
+                gameState: 'GAME_OVER',
+                gameMessage: action.message,
+            };
+
+        case 'SHOW_RESULT':
+            return {
+                ...state,
+                gameState: 'SHOW_RESULT',
+                gameMessage: action.message,
+            };
+
+        case 'ADD_CHAT_MESSAGE':
+            return {
+                ...state,
+                chatMessages: [...state.chatMessages, { name: action.name, message: action.message }],
+            };
+
+        case 'RESET':
+            return {
+                gameState: 'LOBBY',
+                serverCode: null,
+                players: [],
+                currentQuestion: null,
+                timeLeft: 0,
+                gameMessage: null,
+                chatMessages: [],
+                onlinePlayers: '0',
+            };
+
+        default:
+            return state;
+    }
+}
+
+const initialGameState: GameStateType = {
+    gameState: 'LOBBY',
+    serverCode: null,
+    players: [],
+    currentQuestion: null,
+    timeLeft: 0,
+    gameMessage: null,
+    chatMessages: [],
+    onlinePlayers: '0',
+};
+
 export function GameProvider({ children }: { children: React.ReactNode }) {
     const { lastMessage } = useWebSocket();
     const navigate = useNavigate();
+    const navigateRef = useRef(navigate);
 
-    const [gameState, setGameState] = useState<GameState>('LOBBY');
-    const [serverCode, setServerCode] = useState<string | null>(null);
-    const [players, setPlayers] = useState<string[]>([]);
-    const [currentQuestion, setCurrentQuestion] = useState<{ text: string; time: number } | null>(null);
-    const [gameMessage, setGameMessage] = useState<string | null>(null);
-    const [timeLeft, setTimeLeft] = useState(0);
-    const [chatMessages, setChatMessages] = useState<{ name: string; message: string }[]>([]);
-    const [onlinePlayers, setOnlinePlayers] = useState('0');
+    // Keep navigate ref updated
+    useEffect(() => {
+        navigateRef.current = navigate;
+    }, [navigate]);
 
-    const resetGame = () => {
-        setGameState('LOBBY');
-        setServerCode(null);
-        setPlayers([]);
-        setCurrentQuestion(null);
-        setGameMessage(null);
-        setTimeLeft(0);
-        setChatMessages([]);
-        setOnlinePlayers('0');
-    };
+    const [state, dispatch] = useReducer(gameReducer, initialGameState);
 
-    // Countdown Timer is now driven by backend 'timer_tick' messages
-    // to ensure perfect synchronization across all players.
+    const setServerCode = useCallback((code: string | null) => {
+        dispatch({ type: 'SET_SERVER_CODE', code });
+    }, []);
 
-    // Parse URL params for serverCode on mount/update is now handled by the pages directly calling setServerCode
-    // to ensure path-based params work correctly.
+    const resetGame = useCallback(() => {
+        dispatch({ type: 'RESET' });
+    }, []);
 
+    // Handle WebSocket messages - optimized to prevent unnecessary re-renders
     useEffect(() => {
         if (!lastMessage) return;
 
-        switch (lastMessage.type) {
+        const msg = lastMessage;
+
+        switch (msg.type) {
             case 'chat_message':
-                if (typeof lastMessage.message === 'object') {
-                    setChatMessages(prev => [...prev, lastMessage.message as { name: string; message: string }]);
+                if (typeof msg.message === 'object') {
+                    dispatch({
+                        type: 'ADD_CHAT_MESSAGE',
+                        name: msg.message.name,
+                        message: msg.message.message
+                    });
                 } else {
-                    setChatMessages(prev => [...prev, { name: 'Unknown', message: String(lastMessage.message) }]);
+                    dispatch({
+                        type: 'ADD_CHAT_MESSAGE',
+                        name: 'Unknown',
+                        message: String(msg.message)
+                    });
                 }
                 break;
 
             case 'online_players':
-                setOnlinePlayers(lastMessage.message);
+                dispatch({ type: 'SET_ONLINE_PLAYERS', count: msg.message });
                 break;
 
             case 'game_starting':
-                setGameState('GAME_STARTING');
-                if (typeof lastMessage.message === 'object') {
-                    setGameMessage(lastMessage.message.text);
-                    if (lastMessage.message.serverCode) {
-                        setServerCode(lastMessage.message.serverCode);
-                        navigate(`/game/${lastMessage.message.serverCode}`);
-                    } else {
-                        navigate(`/game/${serverCode}`);
+                if (typeof msg.message === 'object') {
+                    const targetCode = msg.message.serverCode;
+                    dispatch({
+                        type: 'GAME_STARTING',
+                        message: msg.message.text,
+                        serverCode: targetCode
+                    });
+                    if (targetCode) {
+                        navigateRef.current(`/game/${targetCode}`);
                     }
                 } else {
-                    setGameMessage(lastMessage.message);
-                    navigate(`/game/${serverCode}`);
+                    dispatch({ type: 'GAME_STARTING', message: msg.message });
                 }
                 break;
 
             case 'announcement':
-                // "Loading the game"
-                setGameMessage(lastMessage.message);
+                dispatch({ type: 'SET_ANNOUNCEMENT', message: msg.message });
                 break;
 
             case 'answering_phase':
-                setGameState('PLAYING');
-                setCurrentQuestion({
-                    text: lastMessage.message.question,
-                    time: Number(lastMessage.message.time)
+                dispatch({
+                    type: 'ANSWERING_PHASE',
+                    question: msg.message.question,
+                    time: Number(msg.message.time)
                 });
-                setTimeLeft(Number(lastMessage.message.time)); // Start timer
                 break;
 
             case 'voting_phase':
-                setGameState('VOTING');
-                if (typeof lastMessage.message === 'object' && 'current_players' in lastMessage.message) {
-                    setPlayers(lastMessage.message.current_players);
-                    setTimeLeft(Number(lastMessage.message.time));
+                if (typeof msg.message === 'object' && 'current_players' in msg.message) {
+                    dispatch({
+                        type: 'VOTING_PHASE',
+                        players: msg.message.current_players,
+                        time: Number(msg.message.time)
+                    });
                 }
                 break;
 
             case 'player_answer':
-                if (typeof lastMessage.message === 'object' && 'sender' in lastMessage.message) {
-                    const { sender, answer } = lastMessage.message as { sender: string; answer: string };
-                    setChatMessages(prev => [...prev, { name: sender, message: `Answer: ${answer}` }]);
+                if (typeof msg.message === 'object' && 'sender' in msg.message) {
+                    const { sender, answer } = msg.message as { sender: string; answer: string };
+                    dispatch({
+                        type: 'ADD_CHAT_MESSAGE',
+                        name: sender,
+                        message: `Answer: ${answer}`
+                    });
+                }
+                break;
+
+            case 'ai_answer':
+                if (typeof msg.message === 'object' && 'message' in msg.message && 'senderName' in msg.message) {
+                    const { message, senderName } = msg.message as { message: string; senderName: string };
+                    dispatch({
+                        type: 'ADD_CHAT_MESSAGE',
+                        name: senderName,
+                        message: message
+                    });
                 }
                 break;
 
             case 'timer_tick':
-                setTimeLeft(Number(lastMessage.message));
+                dispatch({ type: 'TIMER_TICK', time: Number(msg.message) });
                 break;
 
             case 'game_over':
-                setGameState('GAME_OVER');
-                setGameMessage(lastMessage.message);
+            case 'human_wins':
+                dispatch({ type: 'GAME_OVER', message: msg.message });
                 break;
 
             case 'round_end':
-                setGameState('ROUND_END');
-                setGameMessage(typeof lastMessage.message === 'string' ? lastMessage.message : JSON.stringify(lastMessage.message));
+                dispatch({
+                    type: 'ROUND_END',
+                    message: typeof msg.message === 'string' ? msg.message : JSON.stringify(msg.message)
+                });
                 break;
 
             case 'kick_info':
-            case 'human_wins':
             case 'gemini_wins':
-                setGameState('SHOW_RESULT');
-                setGameMessage(lastMessage.message);
+                dispatch({ type: 'SHOW_RESULT', message: msg.message });
                 break;
-
-            // ... handle others
         }
-    }, [lastMessage, navigate, serverCode]);
+    }, [lastMessage]); // Only lastMessage as dependency
 
     return (
         <GameContext.Provider value={{
-            gameState,
-            serverCode,
-            players,
-            currentQuestion,
-            timeLeft,
-            gameMessage,
-            chatMessages,
-            onlinePlayers,
+            gameState: state.gameState,
+            serverCode: state.serverCode,
+            players: state.players,
+            currentQuestion: state.currentQuestion,
+            timeLeft: state.timeLeft,
+            gameMessage: state.gameMessage,
+            chatMessages: state.chatMessages,
+            onlinePlayers: state.onlinePlayers,
             setServerCode,
             resetGame
         }}>

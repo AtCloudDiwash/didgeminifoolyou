@@ -1,8 +1,8 @@
-// import { GoogleGenAI } from '@google/genai';
-// const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+import { GoogleGenAI } from '@google/genai';
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export default async function askGemini(prompt, model = "gemini-3-flash-preview", retries = 3) {
-    /*
+export default async function askGemini(prompt, model = "gemini-2.5-flash", retries = 3) {
+
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             const response = await ai.models.generateContent({
@@ -26,6 +26,6 @@ export default async function askGemini(prompt, model = "gemini-3-flash-preview"
             }
         }
     }
-    */
+    
     return "I am a human worker from Silicon Valley.";
 }

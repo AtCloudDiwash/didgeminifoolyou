@@ -56,7 +56,7 @@ export class Round {
 
     const aiAnswer = await this.aiPlayer.decideAnswer(this.question);
     setTimeout(() => {
-      this.broadcast({ type: "answer", message: aiAnswer });
+      this.broadcast("ai_answer", {message: aiAnswer, senderName: this.aiPlayer.name});
       this.#answerLog.set(`${this.aiPlayer.name} (AI Player)`, aiAnswer);
     }, 35000)
 

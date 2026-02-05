@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useWebSocket } from '../context/WebSocketContext';
 import { useGame } from '../context/GameContext';
@@ -6,31 +6,37 @@ import { motion } from 'framer-motion';
 import GemiPoster from '../assets/gemiposter.svg';
 
 export default function LobbyPage() {
-    const { serverCode } = useParams(); // from path /lobby/:serverCode ? No, structure might differ.
-    // Prompt says: "redirects to the lobby... apiRequest to a websocket end"
-    // If I use path /lobby, I need to extract params.
-
+    const { serverCode } = useParams();
     const [searchParams] = useSearchParams();
     const age = searchParams.get('age');
 
-    const { connect, disconnect, connectionError } = useWebSocket();
-    const { onlinePlayers, setServerCode, resetGame } = useGame();
+    const { connect, connectionError } = useWebSocket();
+    const { onlinePlayers, setServerCode } = useGame();
 
+    // Track if we've connected to prevent duplicate connections
+    const hasConnected = useRef(false);
+
+    // Set server code when component mounts or serverCode changes
     useEffect(() => {
         if (serverCode) {
             setServerCode(serverCode);
         }
     }, [serverCode, setServerCode]);
 
+    // Connect to WebSocket only once when component mounts
     useEffect(() => {
-        if (serverCode && age) {
+        if (serverCode && age && !hasConnected.current) {
+            hasConnected.current = true;
             connect(serverCode, age);
         }
+    }, [serverCode, age, connect]);
+
+    // Cleanup only on unmount - DON'T disconnect WebSocket as it needs to persist for GamePage
+    useEffect(() => {
         return () => {
-            disconnect();
-            resetGame();
+            hasConnected.current = false;
         };
-    }, [serverCode, age, connect, disconnect, resetGame]);
+    }, []); // Empty deps - only runs on mount/unmount
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-black">
@@ -45,7 +51,6 @@ export default function LobbyPage() {
                 </motion.div>
 
                 <div className="flex flex-col items-center justify-center gap-4 mt-12">
-                    {/* Character Animation - Reusing placeholder style but smaller */}
                     <motion.div
                         animate={{ y: [0, -20, 0] }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
