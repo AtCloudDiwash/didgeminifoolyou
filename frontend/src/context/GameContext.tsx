@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useReducer, useCallback, u
 import { useWebSocket } from './WebSocketContext';
 import { useNavigate } from 'react-router-dom';
 
-type GameState = 'LOBBY' | 'GAME_STARTING' | 'PLAYING' | 'VOTING' | 'ROUND_END' | 'SHOW_RESULT' | 'GAME_OVER';
+type GameState = 'LOBBY' | 'GAME_STARTING' | 'PLAYING' | 'VOTING' | 'ROUND_END' | 'SHOW_RESULT' | 'GAME_OVER' | 'ANNOUNCEMENT';
 
 interface GameContextType {
     gameState: GameState;

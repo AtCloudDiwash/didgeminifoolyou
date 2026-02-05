@@ -135,6 +135,38 @@ export default function GamePage() {
                     </motion.div>
                 )}
 
+                {/* ANNOUNCEMENT OVERLAY */}
+                {gameState === 'ANNOUNCEMENT' && (
+                    <motion.div
+                        key="announcement"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-black via-brand-blue/10 to-black text-center p-8"
+                    >
+                        <motion.div
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="max-w-4xl space-y-6"
+                        >
+                            <div className="inline-block px-6 py-2 bg-brand-blue/20 border border-brand-blue/50 rounded-full mb-4">
+                                <span className="text-brand-blue font-heading text-sm uppercase tracking-widest">Announcement</span>
+                            </div>
+                            <h2 className="text-5xl md:text-7xl font-heading text-white mb-6 uppercase tracking-wider">
+                                {gameMessage || "Important Update"}
+                            </h2>
+                            <motion.div
+                                animate={{ opacity: [0.5, 1, 0.5] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                className="text-white/60 text-lg font-heading tracking-wide"
+                            >
+                                Please wait...
+                            </motion.div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
                 {/* GAME OVER SCREEN */}
                 {gameState === 'GAME_OVER' && (
                     <motion.div
