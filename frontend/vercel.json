@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "^/(?!.*\\.(js|css|png|jpg|jpeg|svg|ico|wasm|json)$).*",
+      "dest": "/index.html"
+    }
+  ]
+}
