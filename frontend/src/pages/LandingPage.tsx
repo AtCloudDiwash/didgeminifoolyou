@@ -25,7 +25,7 @@ export default function LandingPage() {
 
     const handleCreateServer = async () => {
         try {
-            const response = await fetch(`https://${backend_url}/lobbies/create`, {
+            const response = await fetch(`${backend_url}/lobbies/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ difficulty, rounds })
