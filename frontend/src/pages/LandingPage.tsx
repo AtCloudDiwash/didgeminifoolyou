@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import HeroImage from '../assets/geminposter_and_callout.svg';
 import { useGame } from '../context/GameContext';
 
-const backend_url = import.meta.env.VITE_AWS_BACKEND;
-
 export default function LandingPage() {
     const { resetGame } = useGame();
     const navigate = useNavigate();
@@ -25,7 +23,7 @@ export default function LandingPage() {
 
     const handleCreateServer = async () => {
         try {
-            const response = await fetch(`${backend_url}/lobbies/create`, {
+            const response = await fetch(`https://${import.meta.env.VITE_AWS_BACKEND}/lobbies/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ difficulty, rounds })
