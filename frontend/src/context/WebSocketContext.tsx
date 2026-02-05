@@ -119,7 +119,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         }
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = '3.14.151.45:3000';
+        const host = '3.135.231.92';
         const url = `${protocol}//${host}/?serverCode=${serverCode}&age=${age}`;
 
         const ws = new WebSocket(url);
