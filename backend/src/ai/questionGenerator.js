@@ -22,9 +22,11 @@ export default async function generateQuestions(gameData) {
             QUESTION RULES:
             - Generate exactly ${rounds} questions
             - Each question must be fun and engaging
-            - Each question must be answerable in under 200 characters
+            - Each question must be answerable in exactly 3 to 5 words (no more, no less)
+            - All answers should naturally be lowercase
             - Avoid factual, research-based, or personal questions
             - Avoid questions that require long explanations
+            - Questions should invite short, casual, opinionated answers
 
             DIFFICULTY BEHAVIOR:
             - Easy mode: questions may subtly expose AI-like behavior

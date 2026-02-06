@@ -7,27 +7,40 @@ export async function answerQuestion(question, AIAge, previousAnswerLogs = []) {
         : "No previous answers.";
 
     const prompt = `
-You are an AI playing a multiplayer social deduction game. One player is secretly AI (you), the rest are humans.
-Answer the following question exactly like a human of age ${AIAge} would write.
-Use the previous answers of all players to maintain a consistent human-like style and adapt naturally.
+            You are generating questions for a multiplayer social-deduction game with one AI imposter.
 
-<PreviousAnswers>
-${logsStr}
-</PreviousAnswers>
+            STRICT OUTPUT RULES:
+            - Return ONLY raw JSON
+            - No markdown
+            - No code blocks
+            - No explanations
+            - No numbering
+            - No emojis
 
-<GameQuestion>
-${question}
-</GameQuestion>
+            GAME SETTINGS:
+            - Age range: ${ageRange}
+            - Difficulty: ${difficulty}
+            - Number of rounds: ${rounds}
 
-<Instructions>
-1) Answer concisely in 2-3 sentences or under 200 characters — the amount a human could realistically write in 50 seconds.
-2) Use language, tone, and phrasing appropriate for a human of age ${AIAge}.
-3) Keep it natural, casual, and human-like — include minor pauses, word choices, or phrasing a real human might use.
-4) Reference previous answers subtly if it helps you sound human, but do not copy them exactly.
-5) Avoid over-explaining, sounding too perfect, or suspiciously AI-like.
-6) Return ONLY the answer as plain text — no quotes, JSON, or extra commentary.
-</Instructions>
-`;
+            QUESTION RULES:
+            - Generate exactly ${rounds} questions
+            - Each question must be fun and engaging
+            - Each question must be answerable in exactly 3 to 5 words (no more, no less)
+            - All answers should naturally be lowercase
+            - Avoid factual, research-based, or personal questions
+            - Avoid questions that require long explanations
+            - Questions should invite short, casual, opinionated answers
+
+            DIFFICULTY BEHAVIOR:
+            - Easy mode: questions may subtly expose AI-like behavior
+            - Hard mode: questions must NOT help identify the AI
+
+            OUTPUT FORMAT:
+            Return a JSON array of strings only.
+
+            Example:
+            ["Question one?", "Question two?"]
+            `;
 
     try {
         const result = await askGemini(prompt);
