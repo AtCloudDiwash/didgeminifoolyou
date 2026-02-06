@@ -4,8 +4,6 @@ import http from "http";
 import cors from "cors";
 import lobbiesRouter from './routes/lobbies.js';
 import wss from "./ws/wss.js"
-import generateQuestions from './ai/questionGenerator.js';
-import { Models } from '@google/genai';
 
 const app = express();
 
@@ -17,17 +15,16 @@ const server = http.createServer(app);
 server.on("upgrade", (request, socket, head) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
   const serverCode = url.searchParams.get("serverCode");
-  const name = url.searchParams.get("name");
   const age = url.searchParams.get("age");
 
-  if (!serverCode || !name || !age) {
+  if (!serverCode || !age) {
     socket.destroy();
     console.log("Invalid Request");
     return;
   }
 
   wss.handleUpgrade(request, socket, head, (ws) => {
-    wss.emit("connection", ws, request, serverCode, { name, age });
+    wss.emit("connection", ws, request, serverCode, { age });
   });
 });
 
@@ -35,4 +32,4 @@ server.on("upgrade", (request, socket, head) => {
 app.use("/lobbies", lobbiesRouter);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, '0.0.0.0',() => console.log(`Server running on port ${PORT}`));
