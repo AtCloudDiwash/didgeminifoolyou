@@ -200,7 +200,7 @@ export default function GamePage() {
                             Question: {currentQuestion?.text || "Wait for it..."}
                         </h2>
                         <div className="text-sm font-heading tracking-widest text-white/30 uppercase mt-3 flex justify-center gap-8">
-                            <span className="whitespace-nowrap">Server Code: <span className="text-white/80">{serverCode}</span></span>
+                            {/* <span className="whitespace-nowrap">Server Code: <span className="text-white/80">{serverCode}</span></span> */}
                             <span className="whitespace-nowrap">Online: <span className="text-brand-blue/80">{onlineCountStr}{maxPlayersStr ? `/${maxPlayersStr}` : ''} Players</span></span>
                         </div>
                     </div>
