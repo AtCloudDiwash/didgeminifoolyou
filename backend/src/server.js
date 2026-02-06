@@ -30,6 +30,7 @@ server.on("upgrade", (request, socket, head) => {
 
 // Use the lobby routes
 app.use("/lobbies", lobbiesRouter);
+app.get("/health", (req, res)=>{res.json({status: "ok"})});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0',() => console.log(`Server running on port ${PORT}`));
