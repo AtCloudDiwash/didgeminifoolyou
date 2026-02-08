@@ -1,4 +1,4 @@
-# 🎮 Gemi-Poster: AI Social Deduction Game
+# 🎮 DidGeminiFoolYou? : AI Social Deduction Game
 
 <div align="center">
 
