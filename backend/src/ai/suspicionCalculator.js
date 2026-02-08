@@ -40,7 +40,7 @@ export async function suspicionCalculator(votingTable, answerLogs, aiPlayerName)
         </OutputExample>
         `;
 
-    const result = await askGemini(prompt, model = "gemini-3-flash-preview");
+    const result = await askGemini(prompt);
     prevData = result;
     return JSON.parse(result);
 }
