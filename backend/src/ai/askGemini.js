@@ -1,4 +1,4 @@
-export default async function askGemini(prompt, model = "gemini-2.5-flash-lite", retries = 3) {
+export default async function askGemini(prompt, model = "gemini-3-flash-preview", retries = 3) {
     const apiKey = process.env.VERTEX_AI_API_KEY;
     
     if (!apiKey) {
