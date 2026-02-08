@@ -3,7 +3,7 @@
 <div align="center">
 
 <!-- Replace with your actual logo -->
-![Gemi-Poster Logo](./resources/game_transparent_logo.png)
+![Gemi-Poster Logo](./resources/game_logo_transparent.png)
 
 **An AI-powered multiplayer social deduction game where one player is secretly an AI impostor using Gemini 3 to survive.**
 
@@ -34,8 +34,8 @@ Powered by **Google's Gemini 3 API**, the AI impostor analyzes player behavior, 
 
 <div align="center">
 
-### Game Lobby
-![Game Lobby](./resources/screenshots/lobby.png)
+### Game
+![Main Page](./resources/screenshots/landing.png)
 *Players join the lobby and select difficulty mode*
 
 ### Question Round
