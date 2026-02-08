@@ -58,7 +58,7 @@ export class Round {
     setTimeout(() => {
       this.broadcast("ai_answer", {message: `Answer: ${aiAnswer}`, senderName: this.aiPlayer.name});
       this.#answerLog.set(`${this.aiPlayer.name} (AI Player)`, aiAnswer);
-    }, 35000)
+    }, Math.random() * 15000 + 15000)
 
     this.startPhaseTimer(this.difficultySettings.answer_time);
 

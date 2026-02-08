@@ -91,7 +91,7 @@ export class Game {
   async startRound() {
 
     if (this.currentRoundNumber >= this.totalRounds) {
-      this.broadcast("game_over", "Game over gemini fooled you 🤪");
+      this.broadcast("game_over", `Game over gemini fooled you 🤪. ${this.aiPlayer.name} was the imposter`);
       this.endGame();
       return;
     }
@@ -130,7 +130,7 @@ export class Game {
       .map(([name]) => name);
 
     if (playerToBeKicked.length > 1) {
-      this.broadcast("kick_info", "No one was kicked out");
+      this.broadcast("kick_info", "No one was kicked out 🥱");
     } else {
       if (playerToBeKicked[0] === this.aiPlayer.name && this.aiPlayer.getSwapLeft() > 0) {
         const scores = await suspicionCalculator(roundResults.voteTable, roundResults.answerLog, roundResults.aiPlayerName);
@@ -142,7 +142,7 @@ export class Game {
         this.#lobbyInstance.kickPlayer(playerToKick);
       } else {
         if (playerToBeKicked[0] === this.aiPlayer.name) {
-          this.broadcast("game_over", `Yay! you caught the imposter . ${this.aiPlayer.name} was the imposter`);
+          this.broadcast("game_over", `Yay! you caught the imposter 🥳. ${this.aiPlayer.name} was the imposter`);
           this.endGame();
           return;
         } else {
@@ -156,7 +156,7 @@ export class Game {
         this.startRound();
       }, 2000);
     } else {
-      this.broadcast("game_over", "Game over gemini fooled you 🤪");
+      this.broadcast("game_over", `Game over gemini fooled you 🤪`);
       this.endGame();
       return;
     }

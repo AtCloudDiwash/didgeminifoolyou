@@ -3,39 +3,49 @@ import askGemini from "./askGemini.js";
 export default async function generateQuestions(gameData) {
     const { difficulty, rounds, ageRange } = gameData
 
-    const prompt = `
-            You are generating questions for a multiplayer social-deduction game with one AI imposter.
+const prompt = `
+You are generating questions for a multiplayer social-deduction game with one hidden AI imposter.
 
-            STRICT OUTPUT RULES:
-            - Return ONLY raw JSON
-            - No markdown
-            - No code blocks
-            - No explanations
-            - No numbering
-            - No emojis
+STRICT OUTPUT RULES:
+- Return ONLY raw JSON
+- No markdown
+- No code blocks
+- No explanations
+- No numbering
+- No emojis
 
-            GAME SETTINGS:
-            - Age range: ${ageRange}
-            - Difficulty: ${difficulty}
-            - Number of rounds: ${rounds}
+GAME SETTINGS:
+- Age range: ${ageRange}
+- Difficulty: ${difficulty}
+- Number of rounds: ${rounds}
 
-            QUESTION RULES:
-            - Generate exactly ${rounds} questions
-            - Each question must be fun and engaging
-            - Each question must be answerable in under 200 characters
-            - Avoid factual, research-based, or personal questions
-            - Avoid questions that require long explanations
+QUESTION RULES:
+- Generate exactly ${rounds} questions
+- Each question must be answerable in under 200 characters
+- Use simple, global English
+- Questions must be easy to understand for non-native speakers
+- Avoid regional, cultural, political, or country-specific references
+- Avoid slang, idioms, or internet-specific language
+- Avoid brand names, celebrities, or pop culture
+- Avoid factual, research-based, or personal questions
+- Avoid questions that require storytelling or long explanations
 
-            DIFFICULTY BEHAVIOR:
-            - Easy mode: questions may subtly expose AI-like behavior
-            - Hard mode: questions must NOT help identify the AI
+GAMEPLAY RULES:
+- Questions should encourage short, natural answers
+- Questions should not force emotional or expressive responses
+- Questions should feel casual and everyday
 
-            OUTPUT FORMAT:
-            Return a JSON array of strings only.
+DIFFICULTY BEHAVIOR:
+- Easy mode: questions may slightly reveal unnatural or generic answers
+- Hard mode: questions must be neutral and must not help identify the AI
 
-            Example:
-            ["Question one?", "Question two?"]
-            `;
+OUTPUT FORMAT:
+Return a JSON array of strings only.
+
+Example:
+["What do you usually eat for breakfast?", "Do you prefer morning or night?"]
+`;
+
     const result = await askGemini(prompt);
 
     return JSON.parse(result);
