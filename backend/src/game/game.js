@@ -152,7 +152,9 @@ export class Game {
     }
 
     if (this.#lobbyInstance.getPlayers().length > 1) {
-      this.startRound();
+      setTimeout(() => {
+        this.startRound();
+      }, 2000);
     } else {
       this.broadcast("game_over", "Game over gemini fooled you 🤪");
       this.endGame();
