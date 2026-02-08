@@ -16,6 +16,7 @@ export default function GamePage() {
     const { gameState, serverCode, currentQuestion, timeLeft, gameMessage, onlinePlayers, setServerCode } = useGame();
     const { playerName } = useWebSocket();
     const [showQuestionOverlay, setShowQuestionOverlay] = useState(false);
+    const [isVotingWindowOpen, setIsVotingWindowOpen] = useState(true);
 
     // Sync context serverCode with URL param
     useEffect(() => {
@@ -33,9 +34,27 @@ export default function GamePage() {
         }
     }, [gameState]);
 
+    // Auto-reset voting window to open when voting phase starts
+    useEffect(() => {
+        if (gameState === 'VOTING') {
+            setIsVotingWindowOpen(true);
+        }
+    }, [gameState]);
+
     // Auto-dismiss SHOW_RESULT screen after 5 seconds to prevent freeze
     useEffect(() => {
-        if (gameState === 'SHOW_RESULT') {
+        if (gameState === 'GEMINI_WINS') {
+            const timer = setTimeout(() => {
+                // Game will continue automatically from backend
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [gameState]);
+
+
+    // Auto-dismiss SHOW_RESULT screen after 5 seconds to prevent freeze
+    useEffect(() => {
+        if (gameState === 'HUMAN_WINS') {
             const timer = setTimeout(() => {
                 // Game will continue automatically from backend
             }, 5000);
@@ -91,7 +110,7 @@ export default function GamePage() {
                 )}
 
                 {/* VOTING OVERLAY */}
-                {gameState === 'VOTING' && (
+                {gameState === 'VOTING' && isVotingWindowOpen && (
                     <motion.div
                         key="voting"
                         initial={{ opacity: 0 }}
@@ -99,7 +118,7 @@ export default function GamePage() {
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 z-40 flex items-center justify-center bg-black/90 backdrop-blur"
                     >
-                        <VotingWindow />
+                        <VotingWindow onClose={() => setIsVotingWindowOpen(false)} />
                     </motion.div>
                 )}
 
@@ -119,7 +138,23 @@ export default function GamePage() {
                 )}
 
                 {/* RESULT SCREEN (KICK / WINNER) */}
-                {gameState === 'SHOW_RESULT' && (
+                {gameState === 'GEMINI_WINS' && (
+                    <motion.div
+                        key="result"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black text-center p-8"
+                    >
+                        <h2 className="text-5xl font-heading text-white mb-6 uppercase tracking-wider text-brand-red">
+                            Game Update
+                        </h2>
+                        <p className="text-3xl text-white/90 font-heading max-w-3xl leading-relaxed">
+                            {gameMessage}
+                        </p>
+                    </motion.div>
+                )}
+                {/* RESULT SCREEN (KICK / WINNER) */}
+                {gameState === 'HUMAN_WINS' && (
                     <motion.div
                         key="result"
                         initial={{ opacity: 0 }}
@@ -180,6 +215,22 @@ export default function GamePage() {
                 )}
             </AnimatePresence>
 
+            {/* FLOATING VOTING TABLE BUTTON - Only visible when voting window is closed during voting phase */}
+            {gameState === 'VOTING' && !isVotingWindowOpen && (
+                <motion.button
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    onClick={() => setIsVotingWindowOpen(true)}
+                    className="fixed bottom-8 right-8 z-30 px-6 py-4 bg-brand-blue hover:bg-brand-blue/80 text-white font-heading uppercase tracking-widest rounded-2xl shadow-2xl transition-all active:scale-95 flex items-center gap-3"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Voting Table
+                </motion.button>
+            )}
+
             {/* MAIN CONTAINER */}
             <div className="w-full max-w-5xl h-screen flex flex-col p-6 pt-10">
 
@@ -218,7 +269,7 @@ export default function GamePage() {
 
                 {/* CHAT WINDOW / ANSWERING WINDOW */}
                 <main className="flex-1 overflow-hidden relative bg-[#111] rounded-3xl border border-white/5 shadow-inner">
-                    {gameState === 'PLAYING' && !showQuestionOverlay ? (
+                    {(gameState === 'PLAYING' || gameState === 'GHOST_MODE') && !showQuestionOverlay ? (
                         <div className="h-full flex flex-col">
                             <div className="flex-1 overflow-hidden">
                                 <ChatWindow />

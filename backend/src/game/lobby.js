@@ -98,14 +98,20 @@ export class Lobby {
 
         if (!player) return;
 
-        player.ws.close(4001, "You were kicked from the game");
+        player.ws.send(JSON.stringify({
+            type: "ghost_mode",
+            message: "You were kicked from the game"
+        }));
 
-        this.#players = this.#players.filter(p => p.name !== playerName);
-
-        this.broadcast(
-            "kick_info",
-            `Player with username ${playerName} was kicked out`
-        );
+        // Broadcast to all players EXCEPT the kicked player
+        this.#players.forEach(p => {
+            if (p.name !== playerName) {
+                p.ws.send(JSON.stringify({
+                    type: "kick_info",
+                    message: `Player with username ${playerName} was kicked out`
+                }));
+            }
+        });
     }
 
 
@@ -147,8 +153,16 @@ export class Lobby {
                     )
                 });
                 break;
+
             default:
-                console.log(`Unknown message type failed to parse. ${messageType}`)
+                this.#players.forEach(player => {
+                    player.ws.send(
+                        JSON.stringify({
+                            type: "game_over",
+                            message: messageType    
+                        })
+                    )
+                });
         }
     }
 

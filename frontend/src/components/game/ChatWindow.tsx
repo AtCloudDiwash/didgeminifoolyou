@@ -48,7 +48,7 @@ export default function ChatWindow() {
                             className="flex flex-col items-start"
                         >
                             {/* Player Name Label */}
-                            <span className="text-[10px] uppercase tracking-widest text-white/20 mb-1 ml-4 font-heading">
+                            <span className="text-sm font-bold uppercase tracking-widest text-white/80 mb-1 ml-4 font-heading">
                                 {msg.name}
                             </span>
 
@@ -61,8 +61,8 @@ export default function ChatWindow() {
                 </AnimatePresence>
             </div>
 
-            {/* Input Section - Hide during PLAYING state (AnsweringWindow handles it) */}
-            {gameState !== 'PLAYING' && (
+            {/* Input Section - Hide during PLAYING state (AnsweringWindow handles it) and GHOST_MODE */}
+            {gameState !== 'PLAYING' && gameState !== 'GHOST_MODE' && (
                 <div className="p-6 bg-[#0c0c0c] border-t border-white/5">
                     <div className="flex gap-4">
                         <input

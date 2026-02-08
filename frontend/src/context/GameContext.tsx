@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useReducer, useCallback, u
 import { useWebSocket } from './WebSocketContext';
 import { useNavigate } from 'react-router-dom';
 
-type GameState = 'LOBBY' | 'GAME_STARTING' | 'PLAYING' | 'VOTING' | 'ROUND_END' | 'SHOW_RESULT' | 'GAME_OVER' | 'ANNOUNCEMENT';
+type GameState = 'LOBBY' | 'GAME_STARTING' | 'PLAYING' | 'VOTING' | 'ROUND_END' | 'SHOW_RESULT' | 'GAME_OVER' | 'ANNOUNCEMENT' | 'HUMAN_WINS' | 'GEMINI_WINS' | 'GHOST_MODE';
 
 interface GameContextType {
     gameState: GameState;
@@ -13,6 +13,7 @@ interface GameContextType {
     gameMessage: string | null;
     chatMessages: { name: string; message: string }[];
     onlinePlayers: string;
+    kickedPlayers: string[];
     setServerCode: (code: string | null) => void;
     resetGame: () => void;
 }
@@ -29,6 +30,7 @@ type GameStateType = {
     gameMessage: string | null;
     chatMessages: { name: string; message: string }[];
     onlinePlayers: string;
+    kickedPlayers: string[];
 };
 
 type GameAction =
@@ -43,7 +45,11 @@ type GameAction =
     | { type: 'GAME_OVER'; message: string }
     | { type: 'SHOW_RESULT'; message: string }
     | { type: 'ADD_CHAT_MESSAGE'; name: string; message: string }
-    | { type: 'RESET' };
+    | { type: 'ADD_KICKED_PLAYER'; playerName: string }
+    | { type: 'RESET' }
+    | { type: 'HUMAN_WINS'; message: string }
+    | { type: 'GEMINI_WINS'; message: string }
+    | { type: 'GHOST_MODE'; message: string };
 
 function gameReducer(state: GameStateType, action: GameAction): GameStateType {
     switch (action.type) {
@@ -65,6 +71,8 @@ function gameReducer(state: GameStateType, action: GameAction): GameStateType {
             return { ...state, gameMessage: action.message };
 
         case 'ANSWERING_PHASE':
+            // Don't change state if player is in ghost mode
+            if (state.gameState === 'GHOST_MODE') return state;
             return {
                 ...state,
                 gameState: 'PLAYING',
@@ -73,6 +81,8 @@ function gameReducer(state: GameStateType, action: GameAction): GameStateType {
             };
 
         case 'VOTING_PHASE':
+            // Don't change state if player is in ghost mode
+            if (state.gameState === 'GHOST_MODE') return state;
             return {
                 ...state,
                 gameState: 'VOTING',
@@ -84,6 +94,8 @@ function gameReducer(state: GameStateType, action: GameAction): GameStateType {
             return { ...state, timeLeft: action.time };
 
         case 'ROUND_END':
+            // Don't change state if player is in ghost mode
+            if (state.gameState === 'GHOST_MODE') return state;
             return {
                 ...state,
                 gameState: 'ROUND_END',
@@ -98,6 +110,8 @@ function gameReducer(state: GameStateType, action: GameAction): GameStateType {
             };
 
         case 'SHOW_RESULT':
+            // Don't change state if player is in ghost mode
+            if (state.gameState === 'GHOST_MODE') return state;
             return {
                 ...state,
                 gameState: 'SHOW_RESULT',
@@ -110,6 +124,12 @@ function gameReducer(state: GameStateType, action: GameAction): GameStateType {
                 chatMessages: [...state.chatMessages, { name: action.name, message: action.message }],
             };
 
+        case 'ADD_KICKED_PLAYER':
+            return {
+                ...state,
+                kickedPlayers: [...state.kickedPlayers, action.playerName],
+            };
+
         case 'RESET':
             return {
                 gameState: 'LOBBY',
@@ -120,8 +140,27 @@ function gameReducer(state: GameStateType, action: GameAction): GameStateType {
                 gameMessage: null,
                 chatMessages: [],
                 onlinePlayers: '0',
+                kickedPlayers: [],
             };
 
+        case 'HUMAN_WINS':
+            return {
+                ...state,
+                gameState: 'HUMAN_WINS',
+                gameMessage: action.message
+            };
+        case 'GEMINI_WINS':
+            return {
+                ...state,
+                gameState: 'GEMINI_WINS',
+                gameMessage: action.message
+            };
+        case 'GHOST_MODE':
+            return {
+                ...state,
+                gameState: 'GHOST_MODE',
+                gameMessage: action.message
+            }
         default:
             return state;
     }
@@ -136,6 +175,7 @@ const initialGameState: GameStateType = {
     gameMessage: null,
     chatMessages: [],
     onlinePlayers: '0',
+    kickedPlayers: [],
 };
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
@@ -250,7 +290,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 break;
 
             case 'game_over':
-            case 'human_wins':
                 dispatch({ type: 'GAME_OVER', message: msg.message });
                 break;
 
@@ -262,8 +301,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 break;
 
             case 'kick_info':
-            case 'gemini_wins':
+                // Extract player name from message: "Player with username {name} was kicked out"
+                const kickMatch = msg.message.match(/Player with username (.+) was kicked out/);
+                if (kickMatch && kickMatch[1]) {
+                    dispatch({ type: 'ADD_KICKED_PLAYER', playerName: kickMatch[1] });
+                }
                 dispatch({ type: 'SHOW_RESULT', message: msg.message });
+                break;
+            case 'gemini_wins':
+                dispatch({ type: "GEMINI_WINS", message: msg.message });
+                break;
+            case 'human_wins':
+                dispatch({ type: "HUMAN_WINS", message: msg.message });
+                break;
+            case 'ghost_mode':
+                dispatch({ type: "GHOST_MODE", message: msg.message });
                 break;
         }
     }, [lastMessage]); // Only lastMessage as dependency
@@ -278,6 +330,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             gameMessage: state.gameMessage,
             chatMessages: state.chatMessages,
             onlinePlayers: state.onlinePlayers,
+            kickedPlayers: state.kickedPlayers,
             setServerCode,
             resetGame
         }}>

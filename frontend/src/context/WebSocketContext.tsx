@@ -17,6 +17,7 @@ export type IncomingMessage =
     | { type: 'chat_message'; message: { name: string; message: string } | string }
     | { type: 'player_answer'; message: { sender: string; answer: string } | string }
     | { type: 'ai_answer'; message: { message: string; senderName: string } }
+    | { type: 'ghost_mode'; message: string}
     | { type: 'error'; message: string };
 
 interface WebSocketContextType {

@@ -56,7 +56,7 @@ export class Round {
 
     const aiAnswer = await this.aiPlayer.decideAnswer(this.question);
     setTimeout(() => {
-      this.broadcast("ai_answer", {message: aiAnswer, senderName: this.aiPlayer.name});
+      this.broadcast("ai_answer", {message: `Answer: ${aiAnswer}`, senderName: this.aiPlayer.name});
       this.#answerLog.set(`${this.aiPlayer.name} (AI Player)`, aiAnswer);
     }, 35000)
 
@@ -157,7 +157,7 @@ export class Round {
   }
 
   handlePlayerAnswer(playerName, answer) {
-    this.broadcast("player_answer", { sender: playerName, answer: answer });
+    this.broadcast("player_answer", { sender: playerName, answer: answer.toLowerCase() });
     if (!this.#answerLog.has(playerName)) {
       this.#answerLog.set(playerName, answer);
     }

@@ -1,28 +1,52 @@
-import { GoogleGenAI } from '@google/genai';
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-export default async function askGemini(prompt, model = "gemini-2.5-flash", retries = 3) {
+export default async function askGemini(prompt, model = "gemini-2.5-flash-lite", retries = 3) {
+    const apiKey = process.env.VERTEX_AI_API_KEY;
+    
+    if (!apiKey) {
+        console.error("VERTEX_AI_API_KEY is not set");
+        return "I am a human player.";
+    }
 
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-            const response = await ai.models.generateContent({
-                model: model,
-                contents: prompt,
-            });
-            return response.text;
+            const response = await fetch(
+                `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:generateContent?key=${apiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            role: "user",
+                            parts: [{ text: prompt }]
+                        }]
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw {
+                    status: response.status,
+                    message: errorData.error?.message || response.statusText
+                };
+            }
+
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            
+            return text || "I am a human player.";
+
         } catch (error) {
-            const isOverloaded = error.status === 503 || (error.error && error.error.code === 503);
-            if (isOverloaded && attempt < retries) {
-                const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
-                console.warn(`Gemini API overloaded (503). Retrying in ${delay}ms... (Attempt ${attempt}/${retries})`);
+            const isRetryable = error.status === 503 || error.status === 429;
+            
+            if (isRetryable && attempt < retries) {
+                const delay = Math.pow(2, attempt) * 1000;
+                console.warn(`Vertex AI error (${error.status}). Retrying in ${delay}ms... (Attempt ${attempt}/${retries})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             } else {
-                console.error("Gemini API Error:", error);
+                console.error("Vertex AI Error:", error.message || error);
                 if (attempt === retries) {
-                    // Return a safe fallback instead of crashing
                     return "I am a human player.";
                 }
-                throw error; // Rethrow if not a 503 or if we want to bubble up other errors (but we catch 503s to retry)
             }
         }
     }

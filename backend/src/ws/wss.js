@@ -101,11 +101,10 @@ const handleAutoStart = async (serverCode, wss) => { // Added wss parameter
     lobby.getDifficultyMode(),
     lobby.getLobbyRounds(),
     wss,
-    async () => { // onGameEndCallback correctly defined as async
+    async (msg) => { // onGameEndCallback correctly defined as async
       console.log(`Game ended for lobby ${serverCode}`);
 
-      // 1️⃣ Broadcast "Game Over" message
-      lobby.broadCastAll("game_over");
+      lobby.broadCastAll(msg);
 
       // 2️⃣ Close all WebSocket connections
       lobby.getPlayers().forEach(player => {
