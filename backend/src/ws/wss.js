@@ -104,8 +104,6 @@ const handleAutoStart = async (serverCode, wss) => { // Added wss parameter
     async (msg) => { // onGameEndCallback correctly defined as async
       console.log(`Game ended for lobby ${serverCode}`);
 
-      lobby.broadCastAll(msg);
-
       // 2️⃣ Close all WebSocket connections
       lobby.getPlayers().forEach(player => {
         try {

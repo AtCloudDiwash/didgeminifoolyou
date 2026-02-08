@@ -306,6 +306,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 if (kickMatch && kickMatch[1]) {
                     dispatch({ type: 'ADD_KICKED_PLAYER', playerName: kickMatch[1] });
                 }
+                // Add announcement to chat
+                dispatch({ type: 'ADD_CHAT_MESSAGE', name: 'SYSTEM', message: msg.message });
                 dispatch({ type: 'SHOW_RESULT', message: msg.message });
                 break;
             case 'gemini_wins':

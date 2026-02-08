@@ -37,7 +37,7 @@ export default function AnsweringWindow() {
                             </span>
                         </div>
                         <div className="text-white/30 font-body text-xs mt-3">
-                            You cannot submit answers in this mode
+                            You have been eliminated. You cannot submit answers in this mode
                         </div>
                     </div>
                 ) : !submitted ? (

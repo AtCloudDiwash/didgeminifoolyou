@@ -91,6 +91,7 @@ export class Game {
   async startRound() {
 
     if (this.currentRoundNumber >= this.totalRounds) {
+      this.broadcast("game_over", "Game over gemini fooled you 🤪");
       this.endGame();
       return;
     }
@@ -142,8 +143,7 @@ export class Game {
       } else {
         if (playerToBeKicked[0] === this.aiPlayer.name) {
           this.broadcast("game_over", `Yay! you caught the imposter . ${this.aiPlayer.name} was the imposter`);
-          gameOverMsg = `Yay! you caught the imposter . ${this.aiPlayer.name} was the imposter`;
-          this.endGame(gameOverMsg);
+          this.endGame();
           return;
         } else {
           this.#lobbyInstance.kickPlayer(playerToBeKicked[0]);
@@ -151,11 +151,10 @@ export class Game {
       }
     }
 
-  if (this.#lobbyInstance.getPlayers().length > 1) {
+    if (this.#lobbyInstance.getPlayers().length > 1) {
       this.startRound();
     } else {
       this.broadcast("game_over", "Game over gemini fooled you 🤪");
-      gameOverMsg = `Yay! you caught the imposter . ${this.aiPlayer.name} was the imposter`;
       this.endGame();
       return;
     }

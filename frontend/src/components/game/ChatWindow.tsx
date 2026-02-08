@@ -40,24 +40,38 @@ export default function ChatWindow() {
                 style={{ scrollbarWidth: 'thin', scrollbarColor: '#333 transparent' }}
             >
                 <AnimatePresence initial={false}>
-                    {chatMessages.map((msg, idx) => (
-                        <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-start"
-                        >
-                            {/* Player Name Label */}
-                            <span className="text-sm font-bold uppercase tracking-widest text-white/80 mb-1 ml-4 font-heading">
-                                {msg.name}
-                            </span>
+                    {chatMessages.map((msg, idx) => {
+                        const isSystem = msg.name === 'SYSTEM';
 
-                            {/* Message Bubble */}
-                            <div className="max-w-[85%] bg-[#1a1a1a] border border-white/5 rounded-2xl px-6 py-3 text-white/90">
-                                <p className="font-body text-base leading-relaxed">{msg.message}</p>
-                            </div>
-                        </motion.div>
-                    ))}
+                        return (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`flex flex-col ${isSystem ? 'items-center my-4' : 'items-start'}`}
+                            >
+                                {/* Player Name Label - Hide for system messages */}
+                                {!isSystem && (
+                                    <span className="text-sm font-bold uppercase tracking-widest text-white/80 mb-1 ml-4 font-heading">
+                                        {msg.name}
+                                    </span>
+                                )}
+
+                                {/* Message Bubble */}
+                                <div
+                                    className={`
+                        ${isSystem
+                                            ? 'bg-brand-red/20 border-brand-red text-brand-red font-bold uppercase tracking-wider text-center w-full'
+                                            : 'max-w-[85%] bg-[#1a1a1a] border-white/5 text-white/90'
+                                        } 
+                        border rounded-2xl px-6 py-3
+                    `}
+                                >
+                                    <p className="font-body text-base leading-relaxed">{msg.message}</p>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
                 </AnimatePresence>
             </div>
 

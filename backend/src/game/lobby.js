@@ -153,16 +153,8 @@ export class Lobby {
                     )
                 });
                 break;
-
             default:
-                this.#players.forEach(player => {
-                    player.ws.send(
-                        JSON.stringify({
-                            type: "game_over",
-                            message: messageType    
-                        })
-                    )
-                });
+                console.log(`Unknown message type failed to parse. ${messageType}`)
         }
     }
 
