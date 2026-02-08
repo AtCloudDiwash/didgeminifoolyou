@@ -46,7 +46,7 @@ Output only the raw reply text
 
     try {
         const result = await askGemini(prompt);
-        return result.trim(); // clean up any leading/trailing whitespace
+        return result.trim().toLowerCase(); // clean up any leading/trailing whitespace
     } catch (error) {
         console.error("Error generating answer:", error);
         return "I think so."; // Fallback answer

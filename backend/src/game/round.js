@@ -157,9 +157,9 @@ export class Round {
   }
 
   handlePlayerAnswer(playerName, answer) {
-    this.broadcast("player_answer", { sender: playerName, answer: answer });
+    this.broadcast("player_answer", { sender: playerName, answer: answer.toLowerCase()});
     if (!this.#answerLog.has(playerName)) {
-      this.#answerLog.set(playerName, answer);
+      this.#answerLog.set(playerName, answer.toLowerCase());
     }
   }
 

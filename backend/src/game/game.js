@@ -132,7 +132,6 @@ export class Game {
       if (playerToBeKicked[0] === this.aiPlayer.name && this.aiPlayer.getSwapLeft() > 0) {
         const scores = await suspicionCalculator(roundResults.voteTable, roundResults.answerLog, roundResults.aiPlayerName);
         this.aiPlayer.useSwap();
-        this.broadcast("announcement", "Something mysterious happened in this round");
         const [playerToKick] = Object.entries(scores.suspicionScores)
           .reduce((max, current) =>
             current[1] > max[1] ? current : max
@@ -140,7 +139,7 @@ export class Game {
         this.#lobbyInstance.kickPlayer(playerToKick);
       } else {
         if (playerToBeKicked[0] === this.aiPlayer.name) {
-          this.broadcast("human_wins", "Yay! you caught the imposter");
+          this.broadcast("game_over", "Yay! you caught the imposter");
           this.endGame();
           return;
         } else {
@@ -152,7 +151,7 @@ export class Game {
     if (this.#lobbyInstance.getPlayers().length > 1) {
       this.startRound();
     } else {
-      this.broadcast("gemini_wins", "Game over gemini fooled you");
+      this.broadcast("game_over", "Game over gemini fooled you");
       this.endGame();
       return;
     }
@@ -174,9 +173,9 @@ export class Game {
       console.log(data);
     }
 
-    this.#lobbyInstance.getPlayers().forEach(player => {
+/*     this.#lobbyInstance.getPlayers().forEach(player => {
       player.ws.send(JSON.stringify({ type: "game_over", message: "Thanks for playing. Create new server and play more" }));
-    });
+    }); */
     if (this.onGameEndCallback) {
       this.onGameEndCallback();
     }
