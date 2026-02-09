@@ -179,12 +179,6 @@ Building Gemi-Poster taught me:
 - LinkedIn: [Diwash Kuskusmiya](https://www.linkedin.com/in/diwashkuskusmiya/)
 - Email: diwash.kuskusmiya@gmail.com
 
-**Susil**
-
-- GitHub: [@codewithme33](https://github.com/codewithme33)
-- LinkedIn: [Susil Dhami](https://www.linkedin.com/in/susil-dhami/)
-- Email: dhamisushil333@gmail.com
-
 ---
 
 ## 🏆 Hackathon
@@ -202,6 +196,6 @@ This project was built for the [Gemini 3 Hackathon](https://gemini3.devpost.com/
 
 ---
 
-Made with ❤️ and Gemini 3 | © 2026 Diwash & Susil
+Made with ❤️ and Gemini 3 | © 2026 Diwash
 
 </div>
