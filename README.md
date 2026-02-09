@@ -8,7 +8,7 @@
 **An AI-powered multiplayer social deduction game where one player is secretly an AI impostor using Gemini 3 to survive.**
 
 [![Play Now](https://img.shields.io/badge/Play%20Now-Live%20Demo-brightgreen?style=for-the-badge)](https://didgeminifoolyou.vercel.app/)
-[![Gemini 3 Hackathon](https://img.shields.io/badge/Gemini%203-Hackathon-blue?style=for-the-badge)](https://gemini3.devpost.com/)
+[![Gemini 3 Hackathon](https://img.shields.io/badge/Gemini%203-Hackathon-blue?style=for-the-badge)]([https://gemini3.devpost.com/](https://devpost.com/software/didgeminifoolyou))
 
 </div>
 
