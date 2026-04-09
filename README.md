@@ -1,4 +1,4 @@
-# 🎮 DidGeminiFoolYou? : AI Social Deduction Game
+# 🎮 DidGeminiFoolYou? : AI Social Deduction Game (I disabled my AWS instance: backend is disabled)
 
 <div align="center">
 
